@@ -6,6 +6,7 @@ import familyRoutes from "./routes/familyRoutes"
 import contactRoutes from "./routes/contactRoutes"
 import billRoutes from './routes/bill';
 import monthlyPaymentRoutes from './routes/monthlyPayment';
+import familyNoteRoutes from './routes/familyNote';
 import cors from 'cors';
 const app = express();
 
@@ -18,6 +19,7 @@ app.use('/family', familyRoutes);
 app.use('/contacts', contactRoutes);
 app.use('/bills', billRoutes);
 app.use('/monthly-payment', monthlyPaymentRoutes);
+app.use('/family-notes', familyNoteRoutes);
 app.use(errorHandler);
 
 export default app;
