@@ -60,7 +60,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     res.status(401).json({ message: 'Invalid credentials' });
     return;
   }
-  // Check if user is owner or member of any family
   const family = await Family.findOne({
     $or: [
       { owner: user._id },
