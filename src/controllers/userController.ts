@@ -84,3 +84,17 @@ export const getUserId = (req: Request, res: Response): void => {
   }
   res.json({ userId: req.user._id });
 };
+
+export const getUserIdByUsername = async (req: Request, res: Response): Promise<void> => {
+  const { username } = req.params;
+  if (!username) {
+    res.status(400).json({ message: 'Username is required' });
+    return;
+  }
+  const user = await User.findOne({ username });
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+  res.json({ userId: user._id });
+};
