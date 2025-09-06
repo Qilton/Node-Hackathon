@@ -14,6 +14,6 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
     return;
   }
   // @ts-ignore
-  req.user = payload;
+  req.user = {payload,_id: (payload as any).id};
   next();
 }
