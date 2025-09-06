@@ -3,7 +3,7 @@ import { User } from '../models/users';
 import { signJwt } from '../utils/jwt';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-
+import config from '../config/config';
 const registerSchema = z.object({
   username: z.string().min(3).max(32),
   password: z.string()
@@ -28,6 +28,7 @@ const loginSchema = z.object({
 });
 
 export const register = async (req: Request, res: Response): Promise<void> => {
+	
   const parseResult = registerSchema.safeParse(req.body);
   if (!parseResult.success) {
     res.status(400).json({ message: 'Invalid input', errors: parseResult.error.issues });
@@ -47,6 +48,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   const parseResult = loginSchema.safeParse(req.body);
+  console.log("Mongo URI:",config.mongoUri);
   if (!parseResult.success) {
     res.status(400).json({ message: 'Invalid input', errors: parseResult.error.issues });
     return;
