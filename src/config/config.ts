@@ -11,7 +11,7 @@ interface Config {
 const config: Config = {
   port: Number(process.env.PORT) || 3000,
   nodeEnv: process.env.NODE_ENV || 'development',
-  mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/ts-server-template',
+  mongoUri: process.env.MONGO_URI || 'mongodb+srv://Qilton:9832900366@cluster0.waa82mj.mongodb.net/',
 };
   export const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
