@@ -11,6 +11,7 @@ const contactSchema = z.object({
   phone: z.string().min(7).max(15),
   notes: z.string().max(128).optional(),
   familyId: z.string().regex(/^[a-fA-F0-9]{24}$/, 'Invalid family ID'),
+  salary: z.number().min(0).optional(), 
 });
 
 const updateNotesSchema = z.object({
@@ -23,7 +24,7 @@ export const addContact = async (req: Request, res: Response) => {
   if (!parseResult.success) {
     return res.status(400).json({ message: 'Invalid input', errors: parseResult.error.issues });
   }
-  const { name, service, phone, notes, paymentType, familyId } = parseResult.data;
+  const { name, service, phone, notes, paymentType, familyId, salary } = parseResult.data;
   const family = await Family.findById(familyId);
   if (!family) {
     return res.status(404).json({ message: 'Family not found' });
@@ -31,7 +32,19 @@ export const addContact = async (req: Request, res: Response) => {
   if (!family.members.includes(req.user!._id)) {
     return res.status(403).json({ message: 'Not a family member' });
   }
-  const contact = new Contact({ name, service, phone, notes, paymentType, family: family._id, addedBy: req.user!._id });
+  if (paymentType === PaymentType.Monthly && (typeof salary !== 'number' || salary < 0)) {
+    return res.status(400).json({ message: 'Salary is required and must be >= 0 for monthly payment type' });
+  }
+  const contact = new Contact({
+    name,
+    service,
+    phone,
+    notes,
+    paymentType,
+    family: family._id,
+    addedBy: req.user!._id,
+    ...(paymentType === PaymentType.Monthly ? { salary } : {}),
+  });
   await contact.save();
   res.status(201).json({ contact });
 };
