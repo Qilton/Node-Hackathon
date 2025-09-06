@@ -13,11 +13,18 @@ const kickMemberSchema = z.object({
 });
 
 export const createFamily = async (req: Request, res: Response) => {
-    console.log("Creating family")
     const { name } = req.body;
-    console.log("User",req.user)
-    if(!name){
+    if (!name) {
         return res.status(400).json({ message: 'Invalid input', errors: 'Name is required' });
+    }
+    const existingFamily = await Family.findOne({
+        $or: [
+            { owner: req.user?._id },
+            { members: req.user?._id }
+        ]
+    });
+    if (existingFamily) {
+        return res.status(403).json({ message: 'You are already an owner or member of a family.' });
     }
     const family = new Family({ name, owner: req.user?._id, members: [req.user?._id] });
     await family.save();
@@ -57,6 +64,15 @@ export const joinFamilyWithCode = async (req: Request, res: Response) => {
         return res.status(400).json({ message: 'Invalid input', errors: parseResult.error.issues });
     }
     const { code } = parseResult.data;
+    const existingFamily = await Family.findOne({
+        $or: [
+            { owner: req.user?._id },
+            { members: req.user?._id }
+        ]
+    });
+    if (existingFamily) {
+        return res.status(403).json({ message: 'You are already an owner or member of a family.' });
+    }
     const familyCode = await FamilyCode.findOne({ code });
     if (!familyCode || familyCode.used) {
         return res.status(400).json({ message: 'Invalid or used code' });

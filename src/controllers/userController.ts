@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { User } from '../models/users';
+import { Family } from '../models/family';
 import { signJwt } from '../utils/jwt';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
@@ -59,8 +60,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     res.status(401).json({ message: 'Invalid credentials' });
     return;
   }
+  // Check if user is owner or member of any family
+  const family = await Family.findOne({
+    $or: [
+      { owner: user._id },
+      { members: user._id }
+    ]
+  });
   const token = signJwt({ id: user._id, username: user.username });
-  res.json({ token });
+  res.json({ token, familyId: family ? family._id : null });
 };
 
 export const getProfile = (req: Request, res: Response): void => {
