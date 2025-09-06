@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="css/css/style.css">
+  <link rel="stylesheet" href="css/css/billStyles.css">
+  <style>
+    .dashboard { display: flex; gap: 2rem; justify-content: center; margin-top: 2rem; }
+    .section { background: rgba(255,255,255,0.8); border-radius: 16px; padding: 1.5rem; min-width: 300px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .section h3 { margin-top: 0; }
+    .helper-list, .note-list, .bill-list { margin-top: 1rem; }
+    .note-expired { color: #b71c1c; text-decoration: line-through; }
+    .paid { color: green; }
+    .due { color: red; }
+  .helper-list, .bill-list {
+    margin-top: 1rem;
+    padding: 0;
+    list-style: none;
+    border-radius: 12px;
+    background: rgba(245, 255, 250, 0.7);
+    box-shadow: 0 2px 8px rgba(60, 120, 80, 0.08);
+  }
+  .helper-list li, .bill-list div {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e0f2e9;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .helper-list li:last-child, .bill-list div:last-child {
+    border-bottom: none;
+  }
+  .bill-list button {
+    background: linear-gradient(135deg, #95d5b2, #d8f3dc);
+    color: #2c3e50;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 16px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+  .bill-list button:hover {
+    box-shadow: 0 2px 8px rgba(149, 213, 178, 0.3);
+    transform: translateY(-2px);
+  }
+</style>
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Helpers Section -->
+    <div class="section" id="helpersSection">
+      <h3>Helpers</h3>
+      <form id="helperForm">
+        <div id="salaryField" style="display:none;">
+          <input type="number" id="helperSalary" placeholder="Salary (Monthly)" min="0"><br>
+        </div>
+        <select id="helperCategory" required>
+          <option value="">Select Category</option>
+          <option>Plumber</option>
+          <option>Maid</option>
+          <option>Electrician</option>
+          <option>Carpenter</option>
+          <option>Cook</option>
+          <option>Driver</option>
+          <option>Gardener</option>
+          <option>Painter</option>
+          <option>Security</option>
+          <option>Technician</option>
+          <option>Other</option>
+        </select><br>
+        <input type="text" id="helperName" placeholder="Helper Name" required><br>
+        <input type="tel" id="helperPhone" placeholder="Phone Number" required><br>
+        <select id="helperPaymentType" required>
+        <script>
+        document.getElementById('helperPaymentType').addEventListener('change', function() {
+          const salaryDiv = document.getElementById('salaryField');
+          if (this.value === 'Monthly') {
+            salaryDiv.style.display = '';
+          } else {
+            salaryDiv.style.display = 'none';
+    
+          }
+        });
+        </script>
+          <option value="">Select Payment Type</option>
+          <option value="Monthly">Monthly</option>
+          <option value="OneTime">One Time</option>
+        </select><br>
+  <button type="submit" id="addHelperBtn">Add Helper</button>
+      </form>
+      <ul class="helper-list" id="helperList"></ul>
+    </div>
+    <!-- Notes Section -->
+    <div class="section" id="notesSection">
+        Dosent work dont even try :)
+        
+      <h3>Notes</h3>
+      <form id="noteForm">
+        <input type="text" id="noteText" placeholder="Note" required><br>
+        <input type="datetime-local" id="noteDeadline" required><br>
+        <button type="submit">Add Note</button>
+      </form>
+      <ul class="note-list" id="noteList"></ul>
+    </div>
+    <!-- Bills & Salaries Section -->
+    <div class="section" id="billsSection">
+      <h3>Bills & Salaries</h3>
+      <form id="billsForm">
+        <select id="billContactSelect" required>
+          <option value="">Select Helper</option>
+        </select><br>
+        <input type="number" id="billAmount" placeholder="Amount" min="0" required><br>
+        <input type="text" id="billDescription" placeholder="Description" required><br>
+        <button type="submit">Add Bill</button>
+      </form>
+      <div class="bill-list" id="billList"></div>
+    </div>
+  </div>
+  <script>
+    // Backend base URL
+    const BASE_URL = 'https://node-hackathon-backend.vercel.app';
+    // Get JWT token from localStorage
+    const token = localStorage.getItem('token');
+    // Get familyId from localStorage (set after join/create family)
+    const familyId = localStorage.getItem('familyId');
+
+    // Helpers (Contacts)
+    const helperForm = document.getElementById('helperForm');
+    const helperList = document.getElementById('helperList');
+    async function fetchHelpers() {
+      helperList.innerHTML = '';
+      if (!token) {
+        alert('You must be logged in.');
+        return;
+      }
+      if (!familyId || familyId.length !== 24) {
+        alert('No valid family selected.');
+        return;
+      }
+      const res = await fetch(`${BASE_URL}/contacts/${familyId}`, {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      const data = await res.json();
+      console.log('Fetch Helpers response:', data);
+      if (res.ok && Array.isArray(data.contacts)) {
+        data.contacts.forEach(contact => {
+          const li = document.createElement('li');
+          li.textContent = `${contact.service}: ${contact.name} (${contact.phone}) - ${contact.paymentType || ''}`;
+          helperList.appendChild(li);
+        });
+      } else if (data.message) {
+        alert(data.message);
+      }
+    }
+    helperForm.onsubmit = async function(e) {
+      e.preventDefault();
+      const cat = document.getElementById('helperCategory').value;
+      const name = document.getElementById('helperName').value;
+      const phone = document.getElementById('helperPhone').value;
+      if (!familyId) { alert('No family selected!'); return; }
+      const paymentType = document.getElementById('helperPaymentType').value;
+      const addBtn = document.getElementById('addHelperBtn');
+      addBtn.disabled = true;
+      addBtn.textContent = 'Adding...';
+      try {
+        let body = { familyId, name, phone, service: cat, paymentType };
+        if (paymentType === 'Monthly') {
+          const salary = parseInt(document.getElementById('helperSalary').value, 10);
+          if (!isNaN(salary)) {
+            body.salary = salary;
+          }
+        }
+        const res = await fetch(`${BASE_URL}/contacts/add`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token
+          },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        console.log('Add Helper response:', data);
+        if (res.status === 201) {
+          alert('Helper added successfully!');
+          fetchHelpers();
+          helperForm.reset();
+          document.getElementById('salaryField').style.display = 'none';
+        } else {
+          alert(data.message || 'Failed to add helper');
+        }
+      } finally {
+        addBtn.disabled = false;
+        addBtn.textContent = 'Add Helper';
+      }
+    };
+    if (token && familyId) fetchHelpers();
+    // Notes (Family Notes)
+    const noteForm = document.getElementById('noteForm');
+    const noteList = document.getElementById('noteList');
+    async function fetchNotes() {
+      noteList.innerHTML = '';
+      if (!familyId) return;
+      const res = await fetch(`${BASE_URL}/family-notes/${familyId}`, {
+        headers: { Authorization: token }
+      });
+      if (res.ok) {
+        const notes = await res.json();
+        notes.forEach(note => {
+          const li = document.createElement('li');
+          li.textContent = `${note.message} (Created: ${new Date(note.createdAt).toLocaleString()})`;
+          li.dataset.noteId = note._id;
+          noteList.appendChild(li);
+        });
+      }
+    }
+    noteForm.onsubmit = async function(e) {
+      e.preventDefault();
+      const text = document.getElementById('noteText').value;
+      const deadline = document.getElementById('noteDeadline').value;
+      if (!familyId) { alert('No family selected!'); return; }
+      const res = await fetch(`${BASE_URL}/family-notes/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token
+        },
+        body: JSON.stringify({ familyId, message: text, deadline })
+      });
+      if (res.ok) {
+        fetchNotes();
+        noteForm.reset();
+      } else {
+        alert('Failed to add note');
+      }
+    };
+    if (token && familyId) fetchNotes();
+    // Bills & Salaries
+    const billContactSelect = document.getElementById('billContactSelect');
+    async function populateBillContacts() {
+      billContactSelect.innerHTML = '<option value="">Select Helper</option>';
+      if (!token || !familyId) return;
+      const res = await fetch(`${BASE_URL}/contacts/${familyId}`, {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.contacts)) {
+        data.contacts.forEach(contact => {
+          const opt = document.createElement('option');
+          opt.value = contact._id;
+          opt.textContent = `${contact.name} (${contact.service})`;
+          billContactSelect.appendChild(opt);
+        });
+      }
+    }
+    if (token && familyId) populateBillContacts();
+
+    const billsForm = document.getElementById('billsForm');
+    const billList = document.getElementById('billList');
+    async function fetchBills() {
+      billList.innerHTML = '';
+      if (!familyId) return;
+      const res = await fetch(`${BASE_URL}/bills/${familyId}`, {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.bills)) {
+          data.bills.forEach(bill => {
+            const div = document.createElement('div');
+            const status = bill.status === 'Paid' ? '<span class="paid">Paid</span>' : '<span class="due">Due</span>';
+            div.innerHTML = `
+              ${bill.contact && bill.contact.name ? bill.contact.name + ': ' : ''}${bill.description}: ₹${bill.amount} ${status}
+              ${bill.status !== 'Paid' ? `<button onclick="markBillPaid('${bill._id}')">Mark as Paid</button>` : ''}
+            `;
+            billList.appendChild(div);
+          });
+        }
+      }
+
+      // Function to mark bill as paid (global scope)
+    }
+
+    // Make markBillPaid globally accessible for onclick
+    window.markBillPaid = async function(billId) {
+      const res = await fetch(`${BASE_URL}/bills/pay`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token
+        },
+        body: JSON.stringify({ billId })
+      });
+      if (res.ok) {
+        alert('Bill marked as paid!');
+        fetchBills(); // Refresh the bills list
+      } else {
+        const data = await res.json();
+        alert(data.message || 'Failed to mark bill as paid');
+      }
+    }
+    
+    billsForm.onsubmit = async function(e) {
+      e.preventDefault();
+      const contactId = billContactSelect.value;
+      const amount = parseInt(document.getElementById('billAmount').value, 10);
+      const description = document.getElementById('billDescription').value;
+      if (!familyId || !contactId || isNaN(amount) || !description) {
+        alert('Please fill all bill fields!');
+        return;
+      }
+      const res = await fetch(`${BASE_URL}/bills/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token
+        },
+        body: JSON.stringify({ familyId, contactId, amount, description })
+      });
+      const data = await res.json();
+      if (res.status === 201) {
+        alert('Bill added successfully!');
+        fetchBills();
+        billsForm.reset();
+      } else {
+        alert(data.message || 'Failed to add bill');
+      }
+    };
+    if (token && familyId) fetchBills();
+  </script>
+</body>
+</html>

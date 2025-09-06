@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community Options</title>
+  <link rel="stylesheet" href="css/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Welcome!</h2>
+    <button id="createBtn">Create Community</button>
+    <button id="joinBtn">Join Community</button>
+    <div id="createForm" style="display:none; margin-top:20px;">
+      <input type="text" id="communityName" placeholder="Enter community name">
+      <button onclick="submitCommunity()">Submit</button>
+    </div>
+    <div id="joinForm" style="display:none; margin-top:20px;">
+      <input type="text" id="communityCode" placeholder="Enter community code">
+      <button onclick="joinCommunity()">Join</button>
+    </div>
+  </div>
+  <script>
+    // Check for token on page load
+    (function() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('You must be logged in to access this page. Redirecting to login...');
+        window.location.href = 'index.html';
+      }
+    })();
+    document.getElementById('createBtn').onclick = function() {
+      document.getElementById('createForm').style.display = 'block';
+      document.getElementById('joinForm').style.display = 'none';
+    };
+    document.getElementById('joinBtn').onclick = function() {
+      document.getElementById('joinForm').style.display = 'block';
+      document.getElementById('createForm').style.display = 'none';
+    };
+    async function submitCommunity() {
+      const name = document.getElementById('communityName').value.trim();
+      if (!name) { alert('Please enter a community name.'); return; }
+      const token = localStorage.getItem('token');
+      const res = await fetch('https://node-hackathon-backend.vercel.app/family/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token
+        },
+        body: JSON.stringify({ name })
+      });
+      const data = await res.json();
+      console.log('Create Community response:', data);
+      if (res.ok && data.family && data.family._id) {
+        localStorage.setItem('familyId', data.family._id);
+        alert('Community created!');
+        window.location.href = 'dashboard.html';
+      } else {
+        alert(data.message || 'Failed to create community');
+      }
+    }
+    async function joinCommunity() {
+      const code = document.getElementById('communityCode').value.trim();
+      if (!code) { alert('Please enter a community code.'); return; }
+      const token = localStorage.getItem('token');
+      const res = await fetch('https://node-hackathon-backend.vercel.app/family/join', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token
+        },
+        body: JSON.stringify({ code })
+      });
+      const data = await res.json();
+      console.log('Join Community response:', data);
+      if (res.ok && data.family && data.family._id) {
+        localStorage.setItem('familyId', data.family._id);
+        alert('Joined community!');
+        window.location.href = 'dashboard.html';
+      } else {
+        alert(data.message || 'Failed to join community');
+      }
+    }
+  </script>
+</body>
+</html>
