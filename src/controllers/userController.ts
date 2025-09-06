@@ -1,3 +1,4 @@
+
 import { Request, Response } from 'express';
 import { User } from '../models/users';
 import { Family } from '../models/family';
@@ -74,4 +75,12 @@ export const getProfile = (req: Request, res: Response): void => {
   // req.user is set by auth middleware
   // @ts-ignore
   res.json({ user: req.user });
+};
+
+export const getUserId = (req: Request, res: Response): void => {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+  res.json({ userId: req.user._id });
 };
